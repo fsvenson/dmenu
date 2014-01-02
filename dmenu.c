@@ -55,6 +55,7 @@ static Item *prev, *curr, *next, *sel;
 static Window win;
 static XIC xic;
 static int mon = -1;
+static char *class = "dmenu", *name = NULL;
 
 #include "config.h"
 
@@ -99,6 +100,8 @@ main(int argc, char *argv[]) {
 			selbgcolor = argv[++i];
 		else if(!strcmp(argv[i], "-sf"))  /* selected foreground color */
 			selfgcolor = argv[++i];
+		else if(!strcmp(argv[i], "-name"))  /* WM_CLASS instance name */
+			name = argv[++i];
 		else
 			usage();
 
@@ -532,6 +535,7 @@ setup(void) {
 	int x, y, screen = DefaultScreen(dc->dpy);
 	Window root = RootWindow(dc->dpy, screen);
 	XSetWindowAttributes swa;
+	XClassHint *classhint;
 	XIM xim;
 #ifdef XINERAMA
 	int n;
@@ -607,6 +611,15 @@ setup(void) {
 	                    DefaultVisual(dc->dpy, screen),
 	                    CWOverrideRedirect | CWBackPixel | CWEventMask, &swa);
 
+	/* set menu window class hint */
+	classhint = XAllocClassHint();
+	if (classhint) {
+		classhint->res_name = name ? name : class;
+		classhint->res_class = class;
+		XSetClassHint(dc->dpy, win, classhint);
+		XFree(classhint);
+	}
+
 	/* open input methods */
 	xim = XOpenIM(dc->dpy, NULL, NULL, NULL);
 	xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
@@ -620,6 +633,7 @@ setup(void) {
 void
 usage(void) {
 	fputs("usage: dmenu [-b] [-f] [-i] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
-	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-v]\n", stderr);
+	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-name instancename] [-v]\n",
+				stderr);
 	exit(EXIT_FAILURE);
 }
